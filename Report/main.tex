@@ -1,0 +1,153 @@
+\documentclass[aspectratio=54,xcolor=dvipsnames]{beamer}
+\usetheme{SimpleDarkBlue}
+
+% Packages
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath, amssymb}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{physics}
+% \usepackage{siunitx}
+% \AtBeginDocument{\RenewCommandCopy\qty\SI}
+
+
+% Title Information
+\title{Computational Electromagnetics Project}
+\author{Francesco Fischetti}
+\institute{Politecnico di Milano}
+\date{\today}
+
+\begin{document}
+
+% Title Slide
+\begin{frame}
+    \titlepage
+\end{frame}
+
+% Outline Slide
+\begin{frame}{Outline}
+    \tableofcontents
+\end{frame}
+
+\section{Introduction}
+\begin{frame}{Introduction}
+    \begin{itemize}
+        \item Motivation for computational electromagnetics
+        \item Overview of the project objectives
+    \end{itemize}
+\end{frame}
+
+\section{Theory}
+\begin{frame}{Maxwell's Equations (Differential Form)}
+    Maxwell's equations in differential form are given by:
+    \begin{align*}
+        \nabla \cdot \vec{D} &= \rho \\
+        \nabla \cdot \vec{B} &= 0 \\
+        \nabla \times \vec{E} &= -\frac{\partial \vec{B}}{\partial t} \\
+        \nabla \times \vec{H} &= \vec{J} + \frac{\partial \vec{D}}{\partial t}
+    \end{align*}
+
+    \begin{center}
+    %\scriptsize
+    \begin{tabular}{|c|l|c|}
+        \hline
+        Symbol & Quantity & Unit \\
+        \hline
+        $\vec{D}(\vec{r})$ & Electric flux density & $C/m^2$ \\
+        $\vec{B}(\vec{r})$ & Magnetic flux density & $T$ \\
+        $\vec{E}(\vec{r})$ & Electric field & $V/m$ \\
+        $\vec{H}(\vec{r})$ & Magnetic field & $A/m$ \\
+        $\vec{J}(\vec{r})$ & Current density & $A/m^2$ \\
+        $\rho(\vec{r})$ & Volume charge density & $C/m^3$ \\
+        \hline
+    \end{tabular}
+    %\normalsize
+    \end{center}
+\end{frame}
+
+\begin{frame}{Constitutive Relations}
+    For a linear and isotropic medium the constitutive relations read
+    \begin{align*}
+        \vec{D} &= \epsilon \vec{E} \\
+        \vec{B} &= \mu \vec{H} \\
+        \vec{J} &= \sigma \vec{E}
+    \end{align*}
+    \vspace{0.5em}
+    where
+    \begin{center}
+    \begin{tabular}{|c|l|c|}
+        \hline
+        Symbol & Quantity & Unit \\
+        \hline
+        $\epsilon$ & Dielectric permittivity & $[F/m]$ \\
+        $\mu$ & Magnetic permeability & $[H/m]$ \\
+        $\sigma$ & Electric conductivity & $[S/m]$ \\
+        \hline
+    \end{tabular}
+    \end{center}
+\end{frame}
+
+\begin{frame}{Maxwell's Equations}
+    \begin{align*}
+        \nabla \cdot \vec{E} &= \frac{\rho}{\varepsilon_0} \\
+        \nabla \cdot \vec{B} &= 0 \\
+        \nabla \times \vec{E} &= -\frac{\partial \vec{B}}{\partial t} \\
+        \nabla \times \vec{B} &= \mu_0 \vec{J} + \mu_0 \varepsilon_0 \frac{\partial \vec{E}}{\partial t}
+    \end{align*}
+\end{frame}
+
+\begin{frame}{Numerical Methods}
+    \begin{itemize}
+        \item Finite Difference Time Domain (FDTD)
+        \item Finite Element Method (FEM)
+        \item Method of Moments (MoM)
+    \end{itemize}
+\end{frame}
+
+\section{Implementation}
+\begin{frame}{Simulation Setup}
+    \begin{itemize}
+        \item Domain discretization
+        \item Boundary conditions
+        \item Source excitation
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Algorithm Flowchart}
+    \begin{center}
+        % \includegraphics[width=0.7\textwidth]{flowchart.png}
+        \textit{Flowchart image not available.}
+    \end{center}
+\end{frame}
+
+\section{Results}
+\begin{frame}{Simulation Results}
+    \begin{itemize}
+        \item Field distributions
+        \item Convergence analysis
+        \item Validation with analytical solutions
+    \end{itemize}
+    \begin{center}
+        % \includegraphics[width=0.6\textwidth]{results.png}
+        \textit{Results image not available.}
+    \end{center}
+\end{frame}
+
+\section{Conclusion}
+\begin{frame}{Conclusion}
+    \begin{itemize}
+        \item Summary of findings
+        \item Future work
+    \end{itemize}
+\end{frame}
+
+% References
+\begin{frame}{References}
+    \footnotesize
+    \begin{thebibliography}{99}
+        \bibitem{sadiku} M. N. O. Sadiku, \emph{Numerical Techniques in Electromagnetics}, CRC Press, 2000.
+        \bibitem{taflove} A. Taflove, S. C. Hagness, \emph{Computational Electrodynamics: The Finite-Difference Time-Domain Method}, Artech House, 2005.
+    \end{thebibliography}
+\end{frame}
+
+\end{document}

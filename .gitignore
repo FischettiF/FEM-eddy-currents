@@ -1,0 +1,49 @@
+# LaTeX intermediate and output files
+*.aux
+*.bbl
+*.blg
+*.brf
+*.log
+*.nav
+*.out
+*.snm
+*.toc
+*.lof
+*.lot
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+*.xdv
+
+# PDF output
+*.pdf
+
+# Editor backup files
+*~
+*.swp
+*.bak
+*.tmp
+
+# MacOS
+.DS_Store
+
+# Windows
+Thumbs.db
+
+# Latexmk
+latexmkrc
+
+# Generated glossaries and nomenclature
+*.acn
+*.acr
+*.alg
+*.glg
+*.glo
+*.gls
+*.ist
+*.nlo
+*.nls
+
+# Subfolders
+Report/.vscode
+Code/Archivio
