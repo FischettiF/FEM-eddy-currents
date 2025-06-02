@@ -15,18 +15,25 @@ ly = 1.0;
 R1 = 0.10;
 R2 = 0.10;
 dist = 0.30;
-dist1 = dist/2;
+dist1 = -dist/2;
 dist2 = dist/2;
+
+// Refinement Parameters
+Ref1 = 1e-3;
+Ref2 = 1e-3;
+Ref_center_1 = 8e-3;
+Ref_center_2 = 8e-3;
+Ref_rect = 5e-2;
 
 // Rectangle center
 cx = lx/2;
 cy = ly/2;
 
 // Rectangle corners
-Point(1) = {0, 0, 0, 1.0};
-Point(2) = {lx, 0, 0, 1.0};
-Point(3) = {lx, ly, 0, 1.0};
-Point(4) = {0, ly, 0, 1.0};
+Point(1) = {0, 0, 0, Ref_rect};
+Point(2) = {lx, 0, 0, Ref_rect};
+Point(3) = {lx, ly, 0, Ref_rect};
+Point(4) = {0, ly, 0, Ref_rect};
 
 // Rectangle edges
 Line(1) = {1, 2};
@@ -34,22 +41,22 @@ Line(2) = {2, 3};
 Line(3) = {3, 4};
 Line(4) = {4, 1};
 
-// Circle 1 center (+x)
-Point(10) = {cx + dist1, cy, 0, 1.0};
-// Circle 2 center (-x)
-Point(20) = {cx - dist2, cy, 0, 1.0};
+// Circle 1 center 
+Point(10) = {cx + dist1, cy, 0, Ref_center_1};
+// Circle 2 center 
+Point(20) = {cx + dist2, cy, 0, Ref_center_2};
 
 // Circle 1 points
-Point(11) = {cx + dist1 + R1, cy, 0, 1.0};
-Point(12) = {cx + dist1, cy + R1, 0, 1.0};
-Point(13) = {cx + dist1 - R1, cy, 0, 1.0};
-Point(14) = {cx + dist1, cy - R1, 0, 1.0};
+Point(11) = {cx + dist1 + R1, cy, 0, Ref1};
+Point(12) = {cx + dist1, cy + R1, 0, Ref1};
+Point(13) = {cx + dist1 - R1, cy, 0, Ref1};
+Point(14) = {cx + dist1, cy - R1, 0, Ref1};
 
 // Circle 2 points
-Point(21) = {cx - dist2 + R2, cy, 0, 1.0};
-Point(22) = {cx - dist2, cy + R2, 0, 1.0};
-Point(23) = {cx - dist2 - R2, cy, 0, 1.0};
-Point(24) = {cx - dist2, cy - R2, 0, 1.0};
+Point(21) = {cx + dist2 + R2, cy, 0, Ref2};
+Point(22) = {cx + dist2, cy + R2, 0, Ref2};
+Point(23) = {cx + dist2 - R2, cy, 0, Ref2};
+Point(24) = {cx + dist2, cy - R2, 0, Ref2};
 
 // Circle 1 arcs
 Circle(101) = {11, 10, 12};
@@ -64,8 +71,8 @@ Circle(203) = {23, 20, 24};
 Circle(204) = {24, 20, 21};
 
 // Curve loops for circles
-Line Loop(11) = {101, 102, 103, 104};
-Line Loop(12) = {201, 202, 203, 204};
+Curve Loop(11) = {101, 102, 103, 104};
+Curve Loop(12) = {201, 202, 203, 204};
 
 // Rectangle curve loop
 Line Loop(1) = {1, 2, 3, 4};
@@ -81,7 +88,9 @@ Physical Line(2) = {1, 2, 3, 4};
 // Assign physical surfaces
 Physical Surface(1) = {1};      // Rectangle outside circles
 Physical Surface(11) = {11};    // Circle 1
+Point{10} In Surface{11};
 Physical Surface(22) = {22};    // Circle 2
+Point{20} In Surface{22};
 
 // Assign physical points for nodes
 Physical Point(1) = {1, 2, 3, 4}; // Rectangle corners
