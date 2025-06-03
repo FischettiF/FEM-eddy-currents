@@ -8,22 +8,22 @@
 */
 
 // Parameters for rectangle size
-lx = 1.0;
-ly = 1.0;
+lx = 1e-1;
+ly = 1e-1;
 
 // Parameters for circles
-R1 = 0.10;
-R2 = 0.10;
-dist = 0.30;
+R1 = 5e-3;
+R2 = 5e-3;
+dist = 15e-3;
 dist1 = -dist/2;
 dist2 = dist/2;
 
 // Refinement Parameters
-Ref1 = 1e-3;
-Ref2 = 1e-3;
-Ref_center_1 = 8e-3;
-Ref_center_2 = 8e-3;
-Ref_rect = 5e-2;
+Ref1 = R1*5e-3;
+Ref2 = R2*5e-3;
+Ref_center_1 = 9*Ref1;
+Ref_center_2 = 9*Ref2;
+Ref_rect = lx*5e-2;
 
 // Rectangle center
 cx = lx/2;
