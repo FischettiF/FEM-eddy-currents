@@ -45,5 +45,5 @@ latexmkrc
 *.nls
 
 # Subfolders
-Report/.vscode
+.vscode
 Code/Results
