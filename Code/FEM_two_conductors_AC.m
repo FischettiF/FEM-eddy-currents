@@ -27,6 +27,9 @@ function [m, A, Js] = FEM_two_conductors_AC(mesh_file_name, freq, I_1, I_2, mu_0
   % EXTRACT CONDUCTORS AND BOUNDARY CELLS
   [~, conduct_1_nodes, ~] = msh2m_submesh (m, [], cell_id.conduct_1);
   [~, conduct_2_nodes, ~] = msh2m_submesh (m, [], cell_id.conduct_2);
+  [~, external_nodes, ~] = msh2m_submesh (m, [], cell_id.external);
+  external_nodes = setdiff(external_nodes, conduct_1_nodes);
+  external_nodes = setdiff(external_nodes, conduct_1_nodes);
 
   bc_nodes = bim2c_unknowns_on_side (m, cell_id.bc);
 
@@ -62,13 +65,13 @@ function [m, A, Js] = FEM_two_conductors_AC(mesh_file_name, freq, I_1, I_2, mu_0
 
   W = [omega*sigma_C_1*i*sum(q_1), 0; 0, omega*sigma_C_2*i*sum(q_2)];
 
-  System = [S+T, Q; Q', W];
+  System = [S+T, Q; -Q', W];
   Rhs = [zeros(columns(m.p), 1); I_1; I_2];
 
 
   % SOLVE LINEAR SYSTEM
   disp('Solving system ...')
-  % A_J = System \ Rhs; % no BC case
+  ## A_J = System \ Rhs; % no BC case
 
   internal_nodes = setdiff (1:numel(x)+2, bc_nodes);
   A_J = zeros(columns(m.p)+2, 1);
