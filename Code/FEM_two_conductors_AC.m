@@ -50,7 +50,8 @@ function [m, A, Js] = FEM_two_conductors_AC(mesh_file_name, freq, I_1, I_2, mu_0
   disp('Assembling system ...')
 
   S = bim2a_laplacian(m, 1, 1./mu);
-  T = bim2a_reaction(m, 1, omega.*sigma.*i);
+  % T = bim2a_reaction(m, 1, omega.*sigma.*i);
+  T = reaction_full(m, 1, omega.*sigma.*i);
 
   f = bim2a_rhs(m, 1, 1);
 
