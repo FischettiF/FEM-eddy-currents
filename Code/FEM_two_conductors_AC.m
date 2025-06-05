@@ -2,14 +2,13 @@ function [m, A, Js] = FEM_two_conductors_AC(mesh_file_name, freq, I_1, I_2, mu_0
 
   pkg load bim msh
 
-  % MESH PARAMETERS
+  ## MESH PARAMETERS
   cell_id.external = 1;
   cell_id.bc  = 2;
   cell_id.conduct_1 = 11;
   cell_id.conduct_2 = 22;
 
-
-  % MESH LOADING
+  ## MESH LOADING
   disp('Loading data ...')
   source (mesh_file_name);
   m.p = msh.POS'([1 2], :);
@@ -20,24 +19,24 @@ function [m, A, Js] = FEM_two_conductors_AC(mesh_file_name, freq, I_1, I_2, mu_0
   m.e(3, :) = 0;
   m.e(7, :) = 1;
   m.t = msh.TRIANGLES';
-
+  % compute area of each element, and gradient of basis functions
   m = bim2c_mesh_properties (m);
 
+  % Data struct m contains mesh elements, nodes, area of each element
+  % and gradient of basis functions
 
-  % EXTRACT CONDUCTORS AND BOUNDARY CELLS
+  ## EXTRACT CONDUCTORS AND BOUNDARY CELLS
   [~, conduct_1_nodes, ~] = msh2m_submesh (m, [], cell_id.conduct_1);
   [~, conduct_2_nodes, ~] = msh2m_submesh (m, [], cell_id.conduct_2);
-  [~, external_nodes, ~] = msh2m_submesh (m, [], cell_id.external);
-  external_nodes = setdiff(external_nodes, conduct_1_nodes);
-  external_nodes = setdiff(external_nodes, conduct_1_nodes);
-
   bc_nodes = bim2c_unknowns_on_side (m, cell_id.bc);
 
+  % conduct_1_nodes, conduct_2_nodes, bc_nodes are vectors containing
+  % respectively the indices of 1st conductor, 2nd conductor, external boundary
 
-  % SETTING PARAMETERS
-  omega = 2*pi*freq;
+  ## SETTING PARAMETERS
+  omega = 2*pi*freq;  % is a scalar
 
-  mu = ones(columns(m.p), 1)*mu_0;
+  mu = ones(columns(m.p), 1) * mu_0;
   mu(conduct_1_nodes) = mu(conduct_1_nodes) * mu_r_1;
   mu(conduct_2_nodes) = mu(conduct_2_nodes) * mu_r_2;
 
@@ -45,13 +44,14 @@ function [m, A, Js] = FEM_two_conductors_AC(mesh_file_name, freq, I_1, I_2, mu_0
   sigma(conduct_1_nodes) = sigma_C_1;
   sigma(conduct_2_nodes) = sigma_C_2;
 
+  % mu and sigma are vectors containing respectively the values of mu and sigma
+  % in the corresponding nodes
 
-  % ASSEMBPLING SYSTEM
+  ## ASSEMBPLING SYSTEM
   disp('Assembling system ...')
 
   S = bim2a_laplacian(m, 1, 1./mu);
-  % T = bim2a_reaction(m, 1, omega.*sigma.*i);
-  T = reaction_full(m, 1, omega.*sigma.*i);
+  M = reaction_full(m, 1, -omega.*sigma.*i);
 
   f = bim2a_rhs(m, 1, 1);
 
@@ -61,35 +61,33 @@ function [m, A, Js] = FEM_two_conductors_AC(mesh_file_name, freq, I_1, I_2, mu_0
   q_2 = zeros(columns(m.p), 1);
   q_2(conduct_2_nodes) = f(conduct_2_nodes);
 
-
   Q = [-omega.*sigma.*i.*q_1, -omega.*sigma.*i.*q_2];
 
-  W = [omega*sigma_C_1*i*sum(q_1), 0; 0, omega*sigma_C_2*i*sum(q_2)];
+  W = [-omega*sigma_C_1*i*sum(q_1), 0; 0, -omega*sigma_C_2*i*sum(q_2)];
 
-  System = [S+T, Q; -Q', W];
+  System = [S+M, Q; Q', W];
   Rhs = [zeros(columns(m.p), 1); I_1; I_2];
 
-
-  % SOLVE LINEAR SYSTEM
+  ## SOLVE LINEAR SYSTEM
   disp('Solving system ...')
-  ## A_J = System \ Rhs; % no BC case
 
   internal_nodes = setdiff (1:numel(x)+2, bc_nodes);
-  A_J = zeros(columns(m.p)+2, 1);
-  A_J(internal_nodes) = System(internal_nodes, internal_nodes) \ (- System(internal_nodes, bc_nodes) * A_J(bc_nodes) + Rhs(internal_nodes));
+  A_J = zeros(columns(m.p)+2, 1); % setup soultion vector
 
+  % solve linear system applying omogeneous Dirichlet boundary conditions
+  A_J(internal_nodes) = System(internal_nodes, internal_nodes) \
+    (- System(internal_nodes, bc_nodes) * A_J(bc_nodes) + Rhs(internal_nodes));
 
-  % GET RESULTS
+  ## GET RESULTS
   A = A_J(1:end-2);
-  Js = [ omega*sigma_C_1*j*A_J(end-1); omega*sigma_C_2*j*A_J(end)];
+  Js = [ -omega*sigma_C_1*j*A_J(end-1); -omega*sigma_C_2*j*A_J(end)];
 
   J = -omega.*sigma.*i.*A;
   J(conduct_1_nodes) += Js(1);
   J(conduct_2_nodes) += Js(2);
 
-
-  % OUTPUT RESULTS
-  if output_paraview
+  ## OUTPUT RESULTS
+  if output_paraview % Output results to paraview using bim functions ...
 
     disp('Writing output ...')
     if !isfolder ("Results/")

@@ -7,27 +7,36 @@
     Nodes: Physical Point 1 (rectangle), 11 (circle 1), 22 (circle 2)
 */
 
+// ------------------------------------------ //
+// ------------ PARAMETERS ------------------ //
+// ------------------------------------------ //
+
 // Parameters for rectangle size
-lx = 1e-1;
-ly = 1e-1;
-
-// Parameters for circles
-R1 = 5e-3;
-R2 = 5e-3;
-dist = 15e-3;
-dist1 = -dist/2;
-dist2 = dist/2;
-
-// Refinement Parameters
-Ref1 = R1*5e-3;
-Ref2 = R2*5e-3;
-Ref_center_1 = 9*Ref1;
-Ref_center_2 = 9*Ref2;
-Ref_rect = lx*5e-2;
+lx = 2e-1;          // Length of rectangle in x-direction
+ly = 2e-1;          // Length of rectangle in y-direction
 
 // Rectangle center
 cx = lx/2;
 cy = ly/2;
+
+// Parameters for circles
+R1 = 5e-3;          // Radius of circle 1
+R2 = 5e-3;          // Radius of circle 2
+dist = 15e-3;       // Distance between circle centers
+dist1 = -dist/2;    // Distance from rectangle center to circle 1 center
+dist2 = dist/2;     // Distance from rectangle center to circle 2 center
+
+// Refinement Parameters (cell dimensions)
+Ref1 = R1*5e-3;         // Refinement at the boundary of circle 1
+Ref2 = R2*5e-3;         // Refinement at the boundary of circle 2
+Ref_center_1 = 9*Ref1;  // Refinement at the center of circle 1
+Ref_center_2 = 9*Ref2;  // Refinement at the center of circle 2
+Ref_rect = lx*5e-2;     // Refinement at the rectangle boundary
+
+
+// ------------------------------------------ //
+// ------------ IMPLEMENTATION -------------- //
+// ------------------------------------------ //
 
 // Rectangle corners
 Point(1) = {0, 0, 0, Ref_rect};

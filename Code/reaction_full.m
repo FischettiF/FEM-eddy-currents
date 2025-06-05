@@ -1,3 +1,21 @@
+## -*- texinfo -*-
+## @deftypefn {Function File} {[@var{C}]} = @
+## reaction_full(@var{mesh},@var{delta},@var{zeta})
+##
+## Build the finite element full mass matrix for a diffusion
+## problem.
+##
+## The equation taken into account is:
+##
+## @var{delta} * @var{zeta} * u = f
+##
+## where @var{delta} is an element-wise constant scalar function, while
+## @var{zeta} is a piecewise linear conforming scalar function.
+##
+## @seealso{bim2a_rhs, bim2a_advection_diffusion, bim2a_laplacian,
+## bim1a_reaction, bim3a_reaction}
+## @end deftypefn
+
 function C = reaction_full(mesh, delta, zeta)
 
   ## Check input
