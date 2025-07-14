@@ -51,7 +51,8 @@ function [m, A, Js] = FEM_two_conductors_AC(mesh_file_name, freq, I_1, I_2, mu_0
   disp('Assembling system ...')
 
   S = bim2a_laplacian(m, 1, 1./mu);
-  M = reaction_full(m, 1, -omega.*sigma.*i);
+
+  M = reaction_full(m, 1, omega.*sigma.*i);
 
   f = bim2a_rhs(m, 1, 1);
 
@@ -61,12 +62,13 @@ function [m, A, Js] = FEM_two_conductors_AC(mesh_file_name, freq, I_1, I_2, mu_0
   q_2 = zeros(columns(m.p), 1);
   q_2(conduct_2_nodes) = f(conduct_2_nodes);
 
-  Q = [-omega.*sigma.*i.*q_1, -omega.*sigma.*i.*q_2];
+  Q = [omega.*sigma.*i.*q_1, omega.*sigma.*i.*q_2];
 
-  W = [-omega*sigma_C_1*i*sum(q_1), 0; 0, -omega*sigma_C_2*i*sum(q_2)];
+  W = [omega*sigma_C_1*i*sum(q_1), 0; 0, omega*sigma_C_2*i*sum(q_2)];
 
-  System = [S+M, Q; Q', W];
+  System = [S+M, Q; -Q.', -W];  
   Rhs = [zeros(columns(m.p), 1); I_1; I_2];
+  % Note that in matlab/octave the operator ' is the complex conjugate transpose, .' is the transpose
 
   ## SOLVE LINEAR SYSTEM
   disp('Solving system ...')
@@ -75,8 +77,7 @@ function [m, A, Js] = FEM_two_conductors_AC(mesh_file_name, freq, I_1, I_2, mu_0
   A_J = zeros(columns(m.p)+2, 1); % setup soultion vector
 
   % solve linear system applying omogeneous Dirichlet boundary conditions
-  A_J(internal_nodes) = System(internal_nodes, internal_nodes) \
-    (- System(internal_nodes, bc_nodes) * A_J(bc_nodes) + Rhs(internal_nodes));
+  A_J(internal_nodes) = System(internal_nodes, internal_nodes) \ (Rhs(internal_nodes));
 
   ## GET RESULTS
   A = A_J(1:end-2);
