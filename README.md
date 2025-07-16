@@ -23,6 +23,7 @@ The repository is organized as follows:
 
 - `Report/`: Contains the report in latex format
     - `main.tex`: Main report file, containing the physical model, numerical method, implementation details, and results.
+    - `Images/`: Contains figures used in the report.
 
 - `README.md`: This file, providing an overview of the project and instructions for use.
 

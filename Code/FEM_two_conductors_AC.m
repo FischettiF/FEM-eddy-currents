@@ -1,6 +1,6 @@
-function [m, A, Js] = FEM_two_conductors_AC(mesh_file_name, freq, I_1, I_2, mu_0, mu_r_1, mu_r_2, sigma_C_1, sigma_C_2, output_paraview)
+function [A, Js] = FEM_two_conductors_AC(mesh_file_name, freq, I_1, I_2, mu_0, mu_r_1, mu_r_2, sigma_C_1, sigma_C_2, output_type)
 
-  pkg load bim msh
+  pkg load msh fpl bim
 
   ## MESH PARAMETERS
   cell_id.external = 1;
@@ -66,9 +66,8 @@ function [m, A, Js] = FEM_two_conductors_AC(mesh_file_name, freq, I_1, I_2, mu_0
 
   W = [omega*sigma_C_1*i*sum(q_1), 0; 0, omega*sigma_C_2*i*sum(q_2)];
 
-  System = [S+M, Q; -Q.', -W];  
-  Rhs = [zeros(columns(m.p), 1); I_1; I_2];
-  % Note that in matlab/octave the operator ' is the complex conjugate transpose, .' is the transpose
+  System = [S+M, Q; Q.', W];
+  Rhs = [zeros(columns(m.p), 1); -I_1; -I_2];
 
   ## SOLVE LINEAR SYSTEM
   disp('Solving system ...')
@@ -88,7 +87,7 @@ function [m, A, Js] = FEM_two_conductors_AC(mesh_file_name, freq, I_1, I_2, mu_0
   J(conduct_2_nodes) += Js(2);
 
   ## OUTPUT RESULTS
-  if output_paraview % Output results to paraview using bim functions ...
+  if strcmp(output_type, "paraview") % Output results to paraview using fpl functions ...
 
     disp('Writing output ...')
     if !isfolder ("Results/")
@@ -101,16 +100,45 @@ function [m, A, Js] = FEM_two_conductors_AC(mesh_file_name, freq, I_1, I_2, mu_0
     fpl_vtk_raw_write_field ("Results/FEM_eddy_currents", m, {real(A), "Re(A)"; imag(A), "Im(A)"; abs(A), "Abs(A)"; real(J), "Re(J)"; imag(J), "Im(J)"; abs(J), "Abs(J)"}, {});
 
     [conduct_mesh, conduct_nodes, ~] = msh2m_submesh (m, [], [cell_id.conduct_1, cell_id.conduct_2]);
-    if isfile("Results/Eddy_currents.vtu")
-      delete Results/Eddy_currents.vtu
+    if isfile("Results/Current_density.vtu")
+      delete Results/Current_density.vtu
     endif
-    fpl_vtk_raw_write_field ("Results/Eddy_currents", conduct_mesh, {real(J(conduct_nodes)), "Re(J)"; imag(J(conduct_nodes)), "Im(J)"; abs(J(conduct_nodes)), "Abs(J)"}, {});
+    fpl_vtk_raw_write_field ("Results/Current_density", conduct_mesh, {real(J(conduct_nodes)), "Re(J)"; imag(J(conduct_nodes)), "Im(J)"; abs(J(conduct_nodes)), "Abs(J)"}, {});
 
     [void_mesh, void_nodes, ~] = msh2m_submesh (m, [], cell_id.external);
     if isfile("Results/Magnetic_potential.vtu")
       delete Results/Magnetic_potential.vtu
     endif
     fpl_vtk_raw_write_field ("Results/Magnetic_potential", void_mesh, {real(A(void_nodes)), "Re(A)"; imag(A(void_nodes)), "Im(A)"; abs(A(void_nodes)), "Abs(A)"}, {});
+
+  elseif strcmp(output_type, "octave") % Plot results using trisurf function of octave
+
+    figure(1)
+    trisurf(m.t'(:,1:3), x, y, abs(A));
+    shading interp;
+    title("Magnetic potential magnitude");
+    xlabel("x"); ylabel("y"); zlabel("abs(A)");
+    xlim([min(x), max(x)]);
+    ylim([min(y), max(y)]);
+    axis equal tight;
+    view(2);
+    colorbar("eastoutside");
+
+    figure(2)
+    [conduct_mesh, conduct_nodes, ~] = msh2m_submesh (m, [], [cell_id.conduct_1, cell_id.conduct_2]);
+    trisurf(conduct_mesh.t'(:,1:3), x(conduct_nodes), y(conduct_nodes), abs(J(conduct_nodes)));
+    shading interp;
+    title("Current magnitude in the conductors");
+    xlabel("x"); ylabel("y"); zlabel("abs(J)");
+    xlim([min(x(conduct_nodes)), max(x(conduct_nodes))]);
+    ylim([min(y(conduct_nodes)), max(y(conduct_nodes))]);
+    axis equal tight;
+    view(2);
+    colorbar("eastoutside");
+
+  elseif ! strcmp(output_type, "off") % Invalid output tag
+
+    disp("Unrecognized output type, no output is displayed!")
 
   endif
 
