@@ -44,8 +44,7 @@ function [A, Js] = FEM_two_conductors_AC(mesh_file_name, freq, I_1, I_2, mu_0, m
   sigma(conduct_1_nodes) = sigma_C_1;
   sigma(conduct_2_nodes) = sigma_C_2;
 
-  % mu and sigma are vectors containing respectively the values of mu and sigma
-  % in the corresponding nodes
+  % mu and sigma are vectors containing respectively the values of mu and sigma in the corresponding nodes
 
   ## ASSEMBPLING SYSTEM
   disp('Assembling system ...')
@@ -89,7 +88,7 @@ function [A, Js] = FEM_two_conductors_AC(mesh_file_name, freq, I_1, I_2, mu_0, m
   ## OUTPUT RESULTS
   if strcmp(output_type, "paraview") % Output results to paraview using fpl functions ...
 
-    disp('Writing output ...')
+    disp('Writing output to paraview ...')
     if !isfolder ("Results/")
       mkdir Results
     endif
@@ -97,48 +96,41 @@ function [A, Js] = FEM_two_conductors_AC(mesh_file_name, freq, I_1, I_2, mu_0, m
     if isfile("Results/FEM_eddy_currents.vtu")
       delete Results/FEM_eddy_currents.vtu
     endif
-    fpl_vtk_raw_write_field ("Results/FEM_eddy_currents", m, {real(A), "Re(A)"; imag(A), "Im(A)"; abs(A), "Abs(A)"; real(J), "Re(J)"; imag(J), "Im(J)"; abs(J), "Abs(J)"}, {});
+    fpl_vtk_raw_write_field ("Results/FEM_eddy_currents", m, ...
+        {real(A), "Re(A)"; imag(A), "Im(A)"; abs(A), "Abs(A)"; real(J), "Re(J)"; imag(J), "Im(J)"; abs(J), "Abs(J)"}, {});
 
     [conduct_mesh, conduct_nodes, ~] = msh2m_submesh (m, [], [cell_id.conduct_1, cell_id.conduct_2]);
     if isfile("Results/Current_density.vtu")
       delete Results/Current_density.vtu
     endif
-    fpl_vtk_raw_write_field ("Results/Current_density", conduct_mesh, {real(J(conduct_nodes)), "Re(J)"; imag(J(conduct_nodes)), "Im(J)"; abs(J(conduct_nodes)), "Abs(J)"}, {});
+    fpl_vtk_raw_write_field ("Results/Current_density", conduct_mesh, ...
+        {real(J(conduct_nodes)), "Re(J)"; imag(J(conduct_nodes)), "Im(J)"; abs(J(conduct_nodes)), "Abs(J)"}, {});
 
-    [void_mesh, void_nodes, ~] = msh2m_submesh (m, [], cell_id.external);
-    if isfile("Results/Magnetic_potential.vtu")
-      delete Results/Magnetic_potential.vtu
-    endif
-    fpl_vtk_raw_write_field ("Results/Magnetic_potential", void_mesh, {real(A(void_nodes)), "Re(A)"; imag(A(void_nodes)), "Im(A)"; abs(A(void_nodes)), "Abs(A)"}, {});
 
-  elseif strcmp(output_type, "octave") % Plot results using trisurf function of octave
+  elseif strcmp(output_type, "octave") % Plot results using patch function of octave
 
-    figure(1)
-    trisurf(m.t'(:,1:3), x, y, abs(A));
-    shading interp;
+    disp('Plotting output with octave ...')
+
+    figure;
+    patch('Faces', m.t'(:,1:3), 'Vertices', [x, y], ...
+          'FaceVertexCData', abs(A), 'FaceColor', 'interp', 'EdgeColor', 'none');
     title("Magnetic potential magnitude");
-    xlabel("x"); ylabel("y"); zlabel("abs(A)");
-    xlim([min(x), max(x)]);
-    ylim([min(y), max(y)]);
+    xlabel("x"); ylabel("y");
     axis equal tight;
-    view(2);
-    colorbar("eastoutside");
+    colorbar;
 
-    figure(2)
+    figure;
     [conduct_mesh, conduct_nodes, ~] = msh2m_submesh (m, [], [cell_id.conduct_1, cell_id.conduct_2]);
-    trisurf(conduct_mesh.t'(:,1:3), x(conduct_nodes), y(conduct_nodes), abs(J(conduct_nodes)));
-    shading interp;
+    patch('Faces', conduct_mesh.t'(:,1:3), 'Vertices', [x(conduct_nodes), y(conduct_nodes)], ...
+          'FaceVertexCData', abs(J(conduct_nodes)), 'FaceColor', 'interp', 'EdgeColor', 'none');
     title("Current magnitude in the conductors");
-    xlabel("x"); ylabel("y"); zlabel("abs(J)");
-    xlim([min(x(conduct_nodes)), max(x(conduct_nodes))]);
-    ylim([min(y(conduct_nodes)), max(y(conduct_nodes))]);
+    xlabel("x"); ylabel("y");
     axis equal tight;
-    view(2);
-    colorbar("eastoutside");
+    colorbar;
 
   elseif ! strcmp(output_type, "off") % Invalid output tag
 
-    disp("Unrecognized output type, no output is displayed!")
+    disp("Warning: Unrecognized output type, no output is produced!")
 
   endif
 
