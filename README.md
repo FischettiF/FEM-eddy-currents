@@ -17,8 +17,9 @@ The repository is organized as follows:
     - `mesh_two_circ_cond.m`: Mesh in matlab/octave format exported from GMSH.
     - `reaction_full.m`: Script to assemble the full mass matrix.
     - `FEM_two_conductors_AC.m`: Script containing the main function for solving the problem.
-    - `FEM_impedance_two_conductors.m`: Script to compute the impedance of the two conductors.
     - `FEM_eddy_currents.m`: Script to set parameters and call the main function.
+    - `analytical_two_circular_conductors.m`: Script to compute the analytical solution for the impedance of two circular conductors.
+    - `FEM_impedance_two_conductors.m`: Script to compute the error on the impedance of the two circular conductors.
     - `Results/`: Contains the results of the simulations in .vtu format for visualization in paraview.
 
 - `Report/`: Contains the report in latex format
@@ -37,7 +38,7 @@ The repository is organized as follows:
    pkg install -forge fpl
    pkg install -forge bim
    ```
-2. Run the `FEM_eddy_currents.m` script in octave. The impedance of the two conductors will be printed in the console, and the results will be saved in the `Code/Results/` folder for visualization in paraview.
-3. Open the generated `.vtu` files in paraview to visualize the current density and magnetic potential distributions.
+2. To run the simulation and visualize the results, run the `FEM_eddy_currents.m` script in octave. The results will be saved in the `Code/Results/` folder for visualization in paraview, or the results can be directly visualized in octave changing the variable `output_type` in the `FEM_eddy_currents.m` script to `octave`.
+3. To compute the error in impedance, run the `FEM_impedance_two_conductors.m` script. 
 4. To change the parameters of the simulation, modify the `FEM_eddy_currents.m` script. You can adjust the frequency, current values, material properties, and mesh file name as needed.
-5. The mesh can be modified by editing the `two_circ_cond.geo` file and regenerating the mesh using gmsh. After modifying the geometry, the mesh need to be exported again to the `.m` format using gmsh's export functionality.
+5. The mesh can be modified by editing the `two_circ_cond.geo` file and regenerating the mesh using gmsh. After modifying the geometry, the mesh need to be exported again to the `.m` format using gmsh's export functionality. If the mesh is modified, ensure to update the mesh parameters in the `FEM_impedance_two_conductors.m` accordingly.
