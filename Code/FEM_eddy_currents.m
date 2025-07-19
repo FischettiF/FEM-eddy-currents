@@ -2,16 +2,16 @@ clear
 
 ## PHYSICAL PARAMETERS
 
-I_1 = 1;                % current in conductor 1
-I_2 = -1;               % current in conductor 2
-freq = 1e3;             % frequency
+I_1 = 1;                % current in conductor 1 [A]
+I_2 = -1;               % current in conductor 2 [A]
+freq = 1e3;             % frequency [Hz]
 
-sigma_C_1 = 58e6;       % conductivity of conductor 1
-sigma_C_2 = sigma_C_1;  % conductivity of conductor 2
+sigma_C_1 = 58e6;       % conductivity of conductor 1 [S/m]
+sigma_C_2 = sigma_C_1;  % conductivity of conductor 2 [S/m]
 
-mu_0 = 4*pi*1e-7;
+mu_0 = 4*pi*1e-7;       % vacuum permeability [H/m]
 mu_r_1 = 1;             % permeability of conductor 1
-mu_r_2 = 1;             % permeability of conductor 1
+mu_r_2 = 1;             % permeability of conductor 2
 
 mesh_file_name = "mesh_two_circ_cond.m";
 

@@ -46,21 +46,24 @@ function C = reaction_full(mesh, delta, zeta)
   ## Local element matrices (one 3x3 matrix for each triangle in the mesh)
   Blocmat = zeros(3, 3, nelem);
 
-  phi_ij = [2 1 1; 1 2 1; 1 1 2] / 24;
+  ## To integrate constants over each triangle we need to multiply by
+  ## the triangle area. Multiply by the diffusion coefficient now tu
+  ## simplify subsequent computations. Use inverse average for the
+  ## diffusion coefficient.
+  zetadeltaareak = reshape (3./sum (1./zeta(:)(mesh.t (1:3)), 1)(:) .* delta(:) .* mesh.area(:), 1, 1, nelem);
+  phi_ij = [2 1 1; 1 2 1; 1 1 2] / 24; % integrals of reference basis functions
 
   ## Computation
   for inode = 1:3
     for jnode = 1:3
       ginode(inode,jnode,:) = mesh.t(inode,:);
       gjnode(inode,jnode,:) = mesh.t(jnode,:);
-      Blocmat(inode, jnode, :) = phi_ij(inode, jnode) .* 2 .* mesh.area(:) .* delta(:);
+      Blocmat(inode, jnode, :) = phi_ij(inode, jnode) .* 2 .* zetadeltaareak;
     endfor
   endfor
 
   ## Assemble the local (full) matrices into one global (sparse) matrix
   C = sparse (ginode(:), gjnode(:), Blocmat(:));
-  Z = sparse(diag(zeta));
-  C = C*Z;
 
 endfunction
 
