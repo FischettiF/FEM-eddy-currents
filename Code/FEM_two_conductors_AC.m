@@ -44,6 +44,9 @@ function [A, Js] = FEM_two_conductors_AC( mesh_file_name, freq, I_1, I_2, ...
   %    node of each element (m.wjacdet), and gradient of basis functions (m.shg)
   m = bim2c_mesh_properties (m);
 
+  Nnodes = columns(m.p);  % Total number of nodes in the mesh
+  Nelem = columns(m.t);   % Total number of elements in the mesh
+
 
   ## EXTRACT CONDUCTORS AND BOUNDARY CELLS AND NODES
   % conduct_1_nodes, conduct_2_nodes, bc_nodes are vectors containing respectively
@@ -59,14 +62,14 @@ function [A, Js] = FEM_two_conductors_AC( mesh_file_name, freq, I_1, I_2, ...
   omega = 2*pi*freq;  % angular frequency, is a scalar
 
   %--- Build element mu vector: mu0 in external region, mu_0*mu_r in conductors
-  mu = ones(columns(m.t), 1) * mu_0;
+  mu = ones(Nelem, 1) * mu_0;
   mu(conduct_1_elem) = mu(conduct_1_elem) * mu_r_1;
   mu(conduct_2_elem) = mu(conduct_2_elem) * mu_r_2;
 
   %--- Build element indicator function for conductors
-  ones_c_1 = zeros(columns(m.t), 1);
+  ones_c_1 = zeros(Nelem, 1);
   ones_c_1(conduct_1_elem) = 1;
-  ones_c_2 = zeros(columns(m.t), 1);
+  ones_c_2 = zeros(Nelem, 1);
   ones_c_2(conduct_2_elem) = 1;
 
   %--- Build element sigma vector: 0 in external region, sigma_C in conductors
@@ -91,7 +94,7 @@ function [A, Js] = FEM_two_conductors_AC( mesh_file_name, freq, I_1, I_2, ...
 
   %--- Assemble global system
   System = [S+M, Q; Q.', W];
-  Rhs = [zeros(columns(m.p), 1); -I_1; -I_2];
+  Rhs = [zeros(Nnodes, 1); -I_1; -I_2];
 
 
   ## SOLVE LINEAR SYSTEM
@@ -99,8 +102,8 @@ function [A, Js] = FEM_two_conductors_AC( mesh_file_name, freq, I_1, I_2, ...
 
   % Internal nodes are all nodes except the boundary nodes, with the addition of
   % the two unknowns for the source magnetic vector potential in the conductors
-  internal_nodes = setdiff (1:columns(m.p) + 2, bc_nodes);
-  A_J = zeros(columns(m.p) + 2, 1);   % setup solution vector
+  internal_nodes = setdiff (1:Nnodes + 2, bc_nodes);
+  A_J = zeros(Nnodes + 2, 1);   % setup solution vector
 
   % solve linear system applying omogeneous Dirichlet boundary conditions
   A_J(internal_nodes) = System(internal_nodes, internal_nodes) \ Rhs(internal_nodes);

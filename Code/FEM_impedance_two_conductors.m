@@ -32,7 +32,7 @@ for n_f = 1:numel(freq_list)
   printf("Currently computed frequency: %d \n", freq);
 
   % numerical solution
-  [A, Js] = FEM_two_conductors_AC(mesh_file_name, freq, I_1, I_2, mu_0, mu_r_1, mu_r_2, sigma_C, sigma_C, "off");
+  [~, Js] = FEM_two_conductors_AC(mesh_file_name, freq, I_1, I_2, mu_0, mu_r_1, mu_r_2, sigma_C, sigma_C, "off");
   Z_self_1 = Js(1) / (sigma_C * I_1);
   R_fem(n_f) = real(Z_self_1);
   L_fem(n_f) = imag(Z_self_1)/(2*pi*freq);
@@ -49,18 +49,21 @@ error_L = 100*(L_fem-L_an)./L_an;
 
 figure;
 delta = (pi * freq_list * sigma_C * mu_0 * mu_r_1).^(-1/2); % [m]
-loglog(freq_list, delta, "linewidth", 2, freq_list, Ref_bound_C*ones(size(freq_list)), "linewidth", 2, ...
-        freq_list, Ref_center_C*ones(size(freq_list)), "--");
+loglog(freq_list, delta, "linewidth", 2, freq_list, Ref_bound_C*ones(size(freq_list)), "linewidth", 2);
 xlabel("Frequency [Hz]");
 ylabel("Length [m]");
-legend("Skin depth", "Mesh dimension at boundary of the conductors", "Mesh dimension at center of the conductors");
+legend("Skin depth", "Mesh dimension at boundary of the conductors");
+title("Skin depth and mesh dimension (log-log scale)")
+set(gca, "fontsize", 15)
 grid on
 
 figure;
-loglog(freq_list, abs(error_R), 's-k', freq_list, abs(error_L), 'o-r');
+loglog(freq_list, abs(error_R), "linewidth", 2, 's-k', freq_list, abs(error_L), "linewidth", 2, 'o-r');
 xlabel("Frequency [Hz]");
 ylabel("Relative error [%]");
-legend("Error on resistance", "Error on inductance");
+legend({"Error on resistance", "Error on inductance"}, "location", "southeast");
+title("Relative error on resistance and inductance (log-log scale)")
+set(gca, "fontsize", 15)
 grid on
 
 
