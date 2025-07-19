@@ -10,6 +10,7 @@
 \usepackage{dsfont}
 \usepackage{verbatim}
 \usepackage{listings}
+\usepackage{booktabs}
 
 \lstset{
     language=Octave,
@@ -36,6 +37,7 @@
 
 % Title Information
 \title{Computational Electromagnetics Project}
+\subtitle{A One-Step Finite Element Method for Multiconductor Skin Effect Problems}
 \author{Francesco Fischetti}
 \institute{Politecnico di Milano}
 \date{\today}
@@ -109,7 +111,7 @@
         \begin{figure}[h]
             \centering
             \includegraphics[width=0.35\textwidth]{Images/Conductors_figure.png}
-            \caption{Geometry of the two parallel conductors.}
+            \caption{Geometry of the parallel conductors.}
             \label{fig:conductors}
         \end{figure}
 \end{frame}
@@ -342,6 +344,7 @@
 \end{frame}
 
 \section{Implementation}
+\subsection{Mesh Generation}
 \begin{frame}{Implementation: mesh generation I}
     The mesh is generated using the \texttt{Gmsh} software. The mesh is defined in the file \texttt{two\_circ\_cond.geo}, which contains the geometry of the two conductors and the surrounding domain. The settable parameters for the mesh generation are:
     \begin{center}
@@ -367,15 +370,22 @@
 \end{frame}
 
 \begin{frame}{Implementation: mesh generation III}
-    Left: the full mesh; Right: the mesh around the conductors.
     \begin{center}
         \begin{minipage}{0.48\textwidth}
             \centering
-            \includegraphics[width=\textwidth]{Images/Mesh_full.png}
+            \begin{figure}
+                \includegraphics[width=\textwidth]{Images/Mesh_full.png}
+                \caption{Full mesh of the domain.}
+                \label{fig:mesh_full}
+            \end{figure}
         \end{minipage}\hfill
         \begin{minipage}{0.48\textwidth}
             \centering
-            \includegraphics[width=\textwidth]{Images/Mesh_cond.png}
+            \begin{figure}
+                \includegraphics[width=\textwidth]{Images/Mesh_cond.png}
+                \caption{Mesh around the conductors.}
+                \label{fig:mesh_cond}
+            \end{figure}
         \end{minipage}
     \end{center}
 \end{frame}
@@ -446,20 +456,23 @@ function [A, Js] = FEM_two_conductors_AC( mesh_file_name, freq, I_1, I_2, ...
   %--- compute area of each element (m.area), wheigh_i*det(Jacobian) in each 
   %    node of each element (m.wjacdet), and gradient of basis functions (m.shg)
   m = bim2c_mesh_properties (m);
+
+  Nnodes = columns(m.p);  % Total number of nodes in the mesh
+  Nelem = columns(m.t);   % Total number of elements in the mesh
   
 \end{lstlisting}
 \end{frame}
 
 \begin{frame}[fragile]{3. FEM\_two\_conductors\_AC: Extracting Submeshes \& Element Data}
 \scriptsize
-\begin{lstlisting}[firstnumber=48]
+\begin{lstlisting}[firstnumber=51]
   ## EXTRACT CONDUCTORS AND BOUNDARY CELLS AND NODES
   % conduct_1_nodes, conduct_2_nodes, bc_nodes contain respectively
   % the indices of the nodes in 1st conductor, 2nd conductor, external boundary.
   % While conduct_1_elem, conduct_2_elem contain respectively
   % the indices of the elements in 1st and 2nd conductor
-  [~, conduct_1_nodes, conduct_1_elem] = msh2m_submesh (m, [], cell_id.conduct_1);
-  [~, conduct_2_nodes, conduct_2_elem] = msh2m_submesh (m, [], cell_id.conduct_2);
+  [~, conduct_1_nodes, conduct_1_elem] = msh2m_submesh(m, [], cell_id.conduct_1);
+  [~, conduct_2_nodes, conduct_2_elem] = msh2m_submesh(m, [], cell_id.conduct_2);
   bc_nodes = bim2c_unknowns_on_side (m, cell_id.bc);
 
 
@@ -467,14 +480,14 @@ function [A, Js] = FEM_two_conductors_AC( mesh_file_name, freq, I_1, I_2, ...
   omega = 2*pi*freq;  % angular frequency, is a scalar
 
   %--- Build element mu vector: mu0 in external region, mu_0*mu_r in conductors
-  mu = ones(columns(m.t), 1) * mu_0;
+  mu = ones(Nelem, 1) * mu_0;
   mu(conduct_1_elem) = mu(conduct_1_elem) * mu_r_1;
   mu(conduct_2_elem) = mu(conduct_2_elem) * mu_r_2;
 
   %--- Build element indicator function for conductors
-  ones_c_1 = zeros(columns(m.t), 1);
+  ones_c_1 = zeros(Nelem, 1);
   ones_c_1(conduct_1_elem) = 1;
-  ones_c_2 = zeros(columns(m.t), 1);
+  ones_c_2 = zeros(Nelem, 1);
   ones_c_2(conduct_2_elem) = 1;
 
   %--- Build element sigma vector: 0 in external region, sigma_C in conductors
@@ -485,7 +498,7 @@ function [A, Js] = FEM_two_conductors_AC( mesh_file_name, freq, I_1, I_2, ...
 
 \begin{frame}[fragile]{4. FEM\_two\_conductors\_AC: Assembly of Linear System}
 \scriptsize
-\begin{lstlisting}[firstnumber=76]
+\begin{lstlisting}[firstnumber=79]
   ## ASSEMBPLING SYSTEM
   disp('Assembling system ...')
 
@@ -504,21 +517,21 @@ function [A, Js] = FEM_two_conductors_AC( mesh_file_name, freq, I_1, I_2, ...
 
   %--- Assemble global system
   System = [S+M, Q; Q.', W];
-  Rhs = [zeros(columns(m.p), 1); -I_1; -I_2];
+  Rhs = [zeros(Nnodes, 1); -I_1; -I_2];
   
 \end{lstlisting}
 \end{frame}
 
 \begin{frame}[fragile]{5. FEM\_two\_conductors\_AC: Solve Linear System and Postprocessing}
 \scriptsize
-\begin{lstlisting}[firstnumber=97]
+\begin{lstlisting}[firstnumber=100]
   ## SOLVE LINEAR SYSTEM
   disp('Solving system ...')
 
   % Internal nodes are all nodes except the boundary nodes, with the addition of
   % the two unknowns for the source magnetic vector potential in the conductors
-  internal_nodes = setdiff (1:columns(m.p) + 2, bc_nodes);
-  A_J = zeros(columns(m.p) + 2, 1);   % setup solution vector
+  internal_nodes = setdiff (1:Nnodes + 2, bc_nodes);
+  A_J = zeros(Nnodes + 2, 1);   % setup solution vector
 
   % solve linear system applying omogeneous Dirichlet boundary conditions
   A_J(internal_nodes) = System(internal_nodes, internal_nodes) \ Rhs(internal_nodes);
@@ -538,10 +551,10 @@ function [A, Js] = FEM_two_conductors_AC( mesh_file_name, freq, I_1, I_2, ...
   if strcmp(output_type, "paraview") % Output results to paraview using fpl ...
 
 \end{lstlisting}
-\begin{lstlisting}[firstnumber=141]
+\begin{lstlisting}[firstnumber=144]
   elseif strcmp(output_type, "octave")  % Plot results in octave using patch ...
 \end{lstlisting}
-\begin{lstlisting}[firstnumber=168]
+\begin{lstlisting}[firstnumber=171]
 endfunction
 \end{lstlisting}
 \end{frame}
@@ -672,12 +685,13 @@ endfunction
 \begin{block}{Pseudocode Classic FEM}
 \begin{verbatim}
 for K = 1:Nelem
-  Compute local element matrix Mloc_K 3x3
   for i = 1:3
     for j = 1:3
-      Scatter into global: A(I,J) = A(I,J) + Mloc_K(i,j);
+      I(i,j) = global node index of local node i in element K
+      Compute local element matrix Mloc_K(i,j)
     endfor
   endfor
+  Scatter into global matrix
 endfor
 \end{verbatim}
 \end{block}
@@ -689,6 +703,7 @@ Mloc = zeros(3,3,Nelements);
 for i = 1:3
   for j = 1:3
     Compute Mloc(i,j,:) in parallel over all elements
+    Compute global node indices ginode(i,j,:), gjnode(i,j,:) 
   endfor
 endfor
 Single sparse call builds the global matrix
@@ -700,7 +715,7 @@ Single sparse call builds the global matrix
     The Laplacian matrix is computed in \texttt{bim2a\_laplacian}. \\
     Local assembly:
     \begin{align*}
-        [L^{k}]_{ij} &= \int_{k} \epsilon \nabla \phi_i \cdot \nabla \phi_j \, ds = \frac{1}{\mu_k} \nabla \phi_{k,i} \cdot \nabla \phi_{k,j} \, Area_k
+        [L^{k}]_{ij} &= \int_{k} \epsilon \nabla \phi_i \cdot \nabla \phi_j \, ds = \epsilon_k \nabla \phi_{k,i} \cdot \nabla \phi_{k,j} \, Area_k
     \end{align*}
     \texttt{bim2a\_laplacian} has the following inputs:
     \begin{itemize}
@@ -924,24 +939,131 @@ error_R = 100*(R_fem-R_an)./R_an; error_L = 100*(L_fem-L_an)./L_an;
 
 \section{Results}
 \begin{frame}{Simulation Results}
+    The following results are obtained with the parameters:
+    \begin{table}[H]
+    \centering
+    \begin{tabular}{l c r}
+      \toprule
+      \textbf{Parameter} & \textbf{Value} & \textbf{Units} \\
+      \midrule
+        Radius conductor 1   & $5 \times 10^{-3}$         & $m$      \\
+        Radius conductor 2   & $5 \times 10^{-3}$         & $m$      \\
+        Distance between centers  & $1.5 \times 10^{-2}$       & $m$         \\
+        Mesh dimension at conductors boundary & $2.5 \times 10^{-5}$  &  $m$  \\
+        Mesh dimension at conductors center & $2.25 \times 10^{-4}$  &  $m$  \\
+        Imposed current in conductor 1 & $1$        & $A$      \\
+        Imposed current in conductor 2 & $-1$       & $A$    \\
+        Conductivity of conductor 1  & $58 \times 10^6$ & $S/m$    \\
+        Conductivity of conductor 2  & $58 \times 10^6$ & $S/m$    \\
+        Vacuum permeability & $4\pi\times10^{-7}$ & $H/m$    \\
+        Relative permeability of conductor 1 & $1$ & - \\
+        Relative permeability of conductor 2 & $1$ & - \\
+      \bottomrule
+    \end{tabular}
+    \caption{Simulation parameters}\label{tab: Parameters}
+    \end{table}
+\end{frame}
 
+\begin{frame}{Simulation Results: Magnetic Vector Potential}
+    \scriptsize
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.75\textwidth]{Images/Abs_A_contour.png}
+        \caption{Magnetic vector potential magnitude $[T \cdot m]$ at $f = 1 \times 10^3$ Hz. \newline In gray the contour lines, in black the boundary of the conductors.}
+        \label{fig: A_1kHz}
+    \end{figure}
+\end{frame}
+
+\begin{frame}{Simulation Results: Current Density}
+    \scriptsize
+    \begin{figure}[H]
+        \centering
+        \includegraphics[width=0.9\textwidth]{Images/Abs_J.png}
+        \caption{Current density magnitude $[A/m^2]$ at $f = 1 \times 10^3$ Hz inside the conductors.}
+        \label{fig: J_1kHz}
+    \end{figure}
+\end{frame}
+
+\begin{frame}{Simulation Results: Resistance and Inductance error}
+    \scriptsize
+    \begin{center}
+    \begin{minipage}{0.49\textwidth}
+        \centering
+        \begin{figure}[H]
+            \includegraphics[width=\textwidth]{Images/Skin_depth.png}
+            \caption{Skin depth $\delta$ [m] as a function of frequency $f$ [Hz]. The skin depth is defined as $\delta = \sqrt{\frac{2}{\omega \mu \sigma}}$, and it represents the depth at which the current density falls to $1/e$ of its value at the surface.}
+        \end{figure}
+    \end{minipage}\hfill
+    \begin{minipage}{0.49\textwidth}
+        \centering
+        \begin{figure}[H]
+            \includegraphics[width=\textwidth]{Images/Error_plot.png}
+            \caption{Relative error in resistance and inductance as a function of frequency. The resistance error is defined as $\abs{100 \times \frac{R_{fem} - R_{an}}{R_{an}}}$, and the inductance error as $\abs{100 \times \frac{L_{fem} - L_{an}}{L_{an}}}$.}
+        \end{figure}
+    \end{minipage}
+    \end{center}
+\end{frame}
+
+\begin{frame}{Simulation Results: Skin Depth visualization}
+    \scriptsize
+    \begin{center}
+        \includegraphics[width=0.6\textwidth]{Images/Skin_depth_f_1e5.png}\\
+        \scriptsize $\abs{J}$ at $f = 1 \times 10^5$ Hz. $\delta = 2.09 \times 10^{-4}$ m, $h_k = 2.5 \times 10^{-5}$ m. 
+        \vspace{0.5em}
+
+        \includegraphics[width=0.6\textwidth]{Images/Skin_depth_f_1e6.png}\\
+        \scriptsize $\abs{J}$ at $f = 1 \times 10^6$ Hz. $\delta = 6.61 \times 10^{-5}$ m, $h_k = 2.5 \times 10^{-5}$ m.
+        \vspace{0.5em}
+
+        \includegraphics[width=0.6\textwidth]{Images/Skin_depth_f_1e7.png}\\
+        \scriptsize $\abs{J}$ at $f = 1 \times 10^7$ Hz. $\delta = 2.09 \times 10^{-5}$ m, $h_k = 2.5 \times 10^{-5}$ m. \\ 
+        In this case the mesh is not refined enough, error on resistance is about 10\%.
+    \end{center}
+\end{frame}
+
+\begin{frame}{Simulation Results: BEM and FEM comparison}
+    \scriptsize
+    Both simulations are performed with the same parameters. The mesh in the BEM simulation has a total of 200 nodes, while the FEM mesh has $1.37 \times 10^5$ nodes. The total running time of the simulations is similar.
+    \begin{center}
+    \begin{minipage}{0.49\textwidth}
+        \centering
+        \begin{figure}[H]
+            \includegraphics[width=\textwidth]{Images/bem-fem_resistance.png}
+            \caption{Resistance error comparison between BEM and FEM as a function of frequency.}
+        \end{figure}
+    \end{minipage}\hfill
+    \begin{minipage}{0.49\textwidth}
+        \centering
+        \begin{figure}[H]
+            \includegraphics[width=\textwidth]{Images/bem-fem_inductance.png}
+            \caption{Inductance error comparison between BEM and FEM as a function of frequency.}
+        \end{figure}
+    \end{minipage}
+    \end{center}
 \end{frame}
 
 \section{Conclusion}
 \begin{frame}{Conclusion}
     \begin{itemize}
-        \item Summary of findings
-        \item Future work
+        \item The FEM implementation for the eddy currents in two circular conductors is working correctly.
+        \item The results are consistent with the analytical solution, with a relative error below 1\% for the resistance and inductance in the frequency range from $10^3$ Hz to $10^6$ Hz.
+        \item The skin effect is visible in the current density distribution, with the current density decreasing exponentially with depth in the conductors.
+        \item The mesh refinement is crucial for accurate results, especially at high frequencies where the skin depth is small.
+        \item Future work could involve exploring different geometries and materials to further validate the FEM approach. The code can be easily adapted to other geometries and more than two conductors.
     \end{itemize}
 \end{frame}
 
 % References
 \begin{frame}{References}
-    % \footnotesize
-    % \begin{thebibliography}{99}
-        % \bibitem{sadiku} M. N. O. Sadiku, \emph{Numerical Techniques in Electromagnetics}, CRC Press, 2000.
-        % \bibitem{taflove} A. Taflove, S. C. Hagness, \emph{Computational Electrodynamics: The Finite-Difference Time-Domain Method}, Artech House, 2005.
-    % \end{thebibliography}
+    \footnotesize
+    \begin{thebibliography}{99}
+        \bibitem{weiss1982} J. Weiss, Z. J. Csendes, ``A One-Step Finite Element Method for Multiconductor Skin Effect Problems,'' \emph{IEEE Transactions on Power Apparatus and Systems}, Vol. PAS-101, No. 10, pp. 3790-3797, October 1982.
+        \bibitem{rylander2013}
+        T. Rylander, A. Bondeson, P. Ingelström, \emph{Computational Electromagnetics}, Second Edition, Texts in Applied Mathematics, Vol. 51, Springer, 2013. (See Chapter 6)
+        \bibitem{dirienzo_lectures}
+        L. Di Rienzo, ``Lecture Notes for Computational Electromagnetics,'' Politecnico di Milano, Academic Year 2024--2025.
+    \end{thebibliography}
 \end{frame}
+
 
 \end{document}
