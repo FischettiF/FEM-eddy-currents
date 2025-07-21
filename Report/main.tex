@@ -344,7 +344,7 @@
 \end{frame}
 
 \section{Implementation}
-\subsection{Mesh Generation}
+\subsection{Mesh generation}
 \begin{frame}{Implementation: mesh generation I}
     The mesh is generated using the \texttt{Gmsh} software. The mesh is defined in the file \texttt{two\_circ\_cond.geo}, which contains the geometry of the two conductors and the surrounding domain. The settable parameters for the mesh generation are:
     \begin{center}
@@ -424,14 +424,22 @@ function [A, Js] = FEM_two_conductors_AC( mesh_file_name, freq, I_1, I_2, ...
   %   A               : nodal values of magnetic vector potential [T*m]
   %   Js              : source current density in each conductor [A/m^2]
 
-  pkg load msh fpl bim
+  # LOAD PACKAGES
+  try
+    pkg load msh fpl bim
+  catch
+    disp(["Needed packages were not found, make shure to have bim ", ...
+           "installed with the relative dependencies.\n", ...
+           "To install them run:\n pkg -forge install splines msh fpl bim \n"]);
+    A = NaN; Js = NaN; return;
+  end_try_catch
 
 \end{lstlisting}
 \end{frame}
 
 \begin{frame}[fragile]{2. FEM\_two\_conductors\_AC: Mesh Loading \& Preprocessing}
 \scriptsize
-\begin{lstlisting}[firstnumber=22]
+\begin{lstlisting}[firstnumber=31]
   ## MESH PARAMETERS
   %--- Define region identifiers in the Gmsh .m file
   cell_id.external = 1;     % outer domain tag
@@ -465,7 +473,7 @@ function [A, Js] = FEM_two_conductors_AC( mesh_file_name, freq, I_1, I_2, ...
 
 \begin{frame}[fragile]{3. FEM\_two\_conductors\_AC: Extracting Submeshes \& Element Data}
 \scriptsize
-\begin{lstlisting}[firstnumber=51]
+\begin{lstlisting}[firstnumber=60]
   ## EXTRACT CONDUCTORS AND BOUNDARY CELLS AND NODES
   % conduct_1_nodes, conduct_2_nodes, bc_nodes contain respectively
   % the indices of the nodes in 1st conductor, 2nd conductor, external boundary.
@@ -498,7 +506,7 @@ function [A, Js] = FEM_two_conductors_AC( mesh_file_name, freq, I_1, I_2, ...
 
 \begin{frame}[fragile]{4. FEM\_two\_conductors\_AC: Assembly of Linear System}
 \scriptsize
-\begin{lstlisting}[firstnumber=79]
+\begin{lstlisting}[firstnumber=88]
   ## ASSEMBPLING SYSTEM
   disp('Assembling system ...')
 
@@ -524,7 +532,7 @@ function [A, Js] = FEM_two_conductors_AC( mesh_file_name, freq, I_1, I_2, ...
 
 \begin{frame}[fragile]{5. FEM\_two\_conductors\_AC: Solve Linear System and Postprocessing}
 \scriptsize
-\begin{lstlisting}[firstnumber=100]
+\begin{lstlisting}[firstnumber=109]
   ## SOLVE LINEAR SYSTEM
   disp('Solving system ...')
 
@@ -551,15 +559,15 @@ function [A, Js] = FEM_two_conductors_AC( mesh_file_name, freq, I_1, I_2, ...
   if strcmp(output_type, "paraview") % Output results to paraview using fpl ...
 
 \end{lstlisting}
-\begin{lstlisting}[firstnumber=144]
+\begin{lstlisting}[firstnumber=153]
   elseif strcmp(output_type, "octave")  % Plot results in octave using patch ...
 \end{lstlisting}
-\begin{lstlisting}[firstnumber=171]
+\begin{lstlisting}[firstnumber=180]
 endfunction
 \end{lstlisting}
 \end{frame}
 
-\subsection{bim2c\_mesh\_properties}
+\subsection{Mesh properties}
 \begin{frame}{bim2c\_mesh\_properties (Description)}
     The mesh properties (area, wheighted jacobian determinant (\texttt{wjacdet}), and shape functions gradients) are computed with the call to the function \texttt{bim2c\_mesh\_properties} of the \texttt{bim} package. This functions calls other subfunctions, one to compute the area (and \texttt{wjacdet}) of each element, and another to compute the gradients of the shape functions.
     The variables used in the subfunctions are:
@@ -1044,12 +1052,13 @@ error_R = 100*(R_fem-R_an)./R_an; error_L = 100*(L_fem-L_an)./L_an;
 
 \section{Conclusion}
 \begin{frame}{Conclusion}
+    \small
     \begin{itemize}
         \item The FEM implementation for the eddy currents in two circular conductors is working correctly.
         \item The results are consistent with the analytical solution, with a relative error below 1\% for the resistance and inductance in the frequency range from $10^3$ Hz to $10^6$ Hz.
         \item The skin effect is visible in the current density distribution, with the current density decreasing exponentially with depth in the conductors.
         \item The mesh refinement is crucial for accurate results, especially at high frequencies where the skin depth is small.
-        \item Future work could involve exploring different geometries and materials to further validate the FEM approach. The code can be easily adapted to other geometries and more than two conductors.
+        \item Future work: The code can be used to simulate other configurations of conductors, by changing the mesh file and the physical parameters. Moreover it can be easily extended to more than two conductors.
     \end{itemize}
 \end{frame}
 
